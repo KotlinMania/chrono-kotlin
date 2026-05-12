@@ -119,7 +119,7 @@ at your option.
 
 ```kotlin
 dependencies {
-    implementation("io.github.kotlinmania:chrono-kotlin:0.1.0-SNAPSHOT")
+    implementation("io.github.kotlinmania:chrono-kotlin:0.1.0")
 }
 ```
 
