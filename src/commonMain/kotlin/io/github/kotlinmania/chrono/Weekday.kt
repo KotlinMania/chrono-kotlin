@@ -209,4 +209,4 @@ class ParseWeekdayError internal constructor() : Throwable() {
     override fun hashCode(): Int = 0
 }
 
-// the actual `FromStr` implementation is in the `format` module to leverage the existing code
+// The actual string parsing implementation is in the format module to leverage the existing code.

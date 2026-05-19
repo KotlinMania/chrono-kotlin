@@ -20,7 +20,7 @@ class WeekdaySetTest {
         }
     }
 
-    // `split_at()` is used in `iter()`, so we must not iterate
+    // `splitAt()` is used in `iter()`, so we must not iterate
     // over all days with `WeekdaySet.ALL.iter(Weekday.Mon)`.
     @Test
     fun splitAtIsEquivalentToIterating() {
