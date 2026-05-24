@@ -209,10 +209,18 @@ kotlin {
         binaries.framework { baseName = "Chrono"; xcf.add(this) }
     }
     iosSimulatorArm64 {
-        binaries.framework { baseName = "Chrono"; xcf.add(this) }
+        binaries.framework {
+            baseName = "Chrono"
+            isStatic = true
+            xcf.add(this)
+        }
     }
     iosX64 {
-        binaries.framework { baseName = "Chrono"; xcf.add(this) }
+        binaries.framework {
+            baseName = "Chrono"
+            isStatic = true
+            xcf.add(this)
+        }
     }
 
     tvosArm64 {
