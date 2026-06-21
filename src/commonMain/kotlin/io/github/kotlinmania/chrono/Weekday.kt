@@ -25,7 +25,9 @@ package io.github.kotlinmania.chrono
  * check(sunday.pred() == Weekday.Sat)
  * ```
  */
-enum class Weekday(val value: Int) {
+enum class Weekday(
+    val value: Int,
+) {
     /** Monday. */
     Mon(0),
 
@@ -45,7 +47,8 @@ enum class Weekday(val value: Int) {
     Sat(5),
 
     /** Sunday. */
-    Sun(6);
+    Sun(6),
+    ;
 
     /**
      * The next day in the week.
@@ -54,15 +57,16 @@ enum class Weekday(val value: Int) {
      * | ----------- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
      * | `w.succ()`: | `Tue` | `Wed` | `Thu` | `Fri` | `Sat` | `Sun` | `Mon` |
      */
-    fun succ(): Weekday = when (this) {
-        Mon -> Tue
-        Tue -> Wed
-        Wed -> Thu
-        Thu -> Fri
-        Fri -> Sat
-        Sat -> Sun
-        Sun -> Mon
-    }
+    fun succ(): Weekday =
+        when (this) {
+            Mon -> Tue
+            Tue -> Wed
+            Wed -> Thu
+            Thu -> Fri
+            Fri -> Sat
+            Sat -> Sun
+            Sun -> Mon
+        }
 
     /**
      * The previous day in the week.
@@ -71,15 +75,16 @@ enum class Weekday(val value: Int) {
      * | ----------- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
      * | `w.pred()`: | `Sun` | `Mon` | `Tue` | `Wed` | `Thu` | `Fri` | `Sat` |
      */
-    fun pred(): Weekday = when (this) {
-        Mon -> Sun
-        Tue -> Mon
-        Wed -> Tue
-        Thu -> Wed
-        Fri -> Thu
-        Sat -> Fri
-        Sun -> Sat
-    }
+    fun pred(): Weekday =
+        when (this) {
+            Mon -> Sun
+            Tue -> Mon
+            Wed -> Tue
+            Thu -> Wed
+            Fri -> Thu
+            Sat -> Fri
+            Sun -> Sat
+        }
 
     /**
      * Returns a day-of-week number starting from Monday = 1. (ISO 8601 weekday number)
@@ -145,15 +150,16 @@ enum class Weekday(val value: Int) {
         return if (lhs < rhs) 7 + lhs - rhs else lhs - rhs
     }
 
-    override fun toString(): String = when (this) {
-        Mon -> "Mon"
-        Tue -> "Tue"
-        Wed -> "Wed"
-        Thu -> "Thu"
-        Fri -> "Fri"
-        Sat -> "Sat"
-        Sun -> "Sun"
-    }
+    override fun toString(): String =
+        when (this) {
+            Mon -> "Mon"
+            Tue -> "Tue"
+            Wed -> "Wed"
+            Thu -> "Thu"
+            Fri -> "Fri"
+            Sat -> "Sat"
+            Sun -> "Sun"
+        }
 
     companion object {
         /**
@@ -161,51 +167,57 @@ enum class Weekday(val value: Int) {
          * [numDaysFromMonday] in this implementation.
          * Do not heavily depend on this though; use explicit methods whenever possible.
          */
-        fun tryFrom(value: Int): Result<Weekday> = when (value) {
-            0 -> Result.success(Mon)
-            1 -> Result.success(Tue)
-            2 -> Result.success(Wed)
-            3 -> Result.success(Thu)
-            4 -> Result.success(Fri)
-            5 -> Result.success(Sat)
-            6 -> Result.success(Sun)
-            else -> Result.failure(OutOfRange())
-        }
+        fun tryFrom(value: Int): Result<Weekday> =
+            when (value) {
+                0 -> Result.success(Mon)
+                1 -> Result.success(Tue)
+                2 -> Result.success(Wed)
+                3 -> Result.success(Thu)
+                4 -> Result.success(Fri)
+                5 -> Result.success(Sat)
+                6 -> Result.success(Sun)
+                else -> Result.failure(OutOfRange())
+            }
 
         /**
          * Any weekday can be represented as an integer from 0 to 6, which equals to
          * [numDaysFromMonday] in this implementation.
          * Do not heavily depend on this though; use explicit methods whenever possible.
          */
-        fun fromI64(n: Long): Weekday? = when (n) {
-            0L -> Mon
-            1L -> Tue
-            2L -> Wed
-            3L -> Thu
-            4L -> Fri
-            5L -> Sat
-            6L -> Sun
-            else -> null
-        }
+        fun fromI64(n: Long): Weekday? =
+            when (n) {
+                0L -> Mon
+                1L -> Tue
+                2L -> Wed
+                3L -> Thu
+                4L -> Fri
+                5L -> Sat
+                6L -> Sun
+                else -> null
+            }
 
-        fun fromU64(n: ULong): Weekday? = when (n) {
-            0uL -> Mon
-            1uL -> Tue
-            2uL -> Wed
-            3uL -> Thu
-            4uL -> Fri
-            5uL -> Sat
-            6uL -> Sun
-            else -> null
-        }
+        fun fromU64(n: ULong): Weekday? =
+            when (n) {
+                0uL -> Mon
+                1uL -> Tue
+                2uL -> Wed
+                3uL -> Thu
+                4uL -> Fri
+                5uL -> Sat
+                6uL -> Sun
+                else -> null
+            }
     }
 }
 
 /** An error resulting from reading [Weekday] value from a string. */
 class ParseWeekdayError internal constructor() : Throwable() {
     override fun toString(): String = "ParseWeekdayError { .. }"
+
     override val message: String get() = toString()
+
     override fun equals(other: Any?): Boolean = other is ParseWeekdayError
+
     override fun hashCode(): Int = 0
 }
 

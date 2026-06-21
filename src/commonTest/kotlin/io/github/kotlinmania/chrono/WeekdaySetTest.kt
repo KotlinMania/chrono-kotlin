@@ -24,18 +24,27 @@ class WeekdaySetTest {
     // over all days with `WeekdaySet.ALL.iter(Weekday.Mon)`.
     @Test
     fun splitAtIsEquivalentToIterating() {
-        val week = listOf(
-            Weekday.Mon, Weekday.Tue, Weekday.Wed, Weekday.Thu, Weekday.Fri, Weekday.Sat, Weekday.Sun,
-        )
+        val week =
+            listOf(
+                Weekday.Mon,
+                Weekday.Tue,
+                Weekday.Wed,
+                Weekday.Thu,
+                Weekday.Fri,
+                Weekday.Sat,
+                Weekday.Sun,
+            )
 
         for (weekdays in iterAll()) {
             for (splitDay in week) {
-                val expectedBefore = WeekdaySet.fromIterable(
-                    week.takeWhile { it != splitDay }.filter { weekdays.contains(it) },
-                )
-                val expectedAfter = WeekdaySet.fromIterable(
-                    week.dropWhile { it != splitDay }.filter { weekdays.contains(it) },
-                )
+                val expectedBefore =
+                    WeekdaySet.fromIterable(
+                        week.takeWhile { it != splitDay }.filter { weekdays.contains(it) },
+                    )
+                val expectedAfter =
+                    WeekdaySet.fromIterable(
+                        week.dropWhile { it != splitDay }.filter { weekdays.contains(it) },
+                    )
 
                 val (actualBefore, actualAfter) = weekdays.splitAt(splitDay)
                 assertEquals(
@@ -101,11 +110,12 @@ class WeekdaySetTest {
     }
 
     /** Iterate over all 128 possible sets, from EMPTY to ALL. */
-    private fun iterAll(): Sequence<WeekdaySet> = sequence {
-        for (bits in 0b0000_0000 until 0b1000_0000) {
-            yield(WeekdaySet(bits))
+    private fun iterAll(): Sequence<WeekdaySet> =
+        sequence {
+            for (bits in 0b0000_0000 until 0b1000_0000) {
+                yield(WeekdaySet(bits))
+            }
         }
-    }
 
     /** Asserts that the 8-th bit of `days` is not set. */
     private fun assertEighthBitInvariant(days: WeekdaySet) {

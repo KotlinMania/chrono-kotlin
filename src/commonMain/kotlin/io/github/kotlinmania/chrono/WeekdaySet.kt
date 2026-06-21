@@ -8,7 +8,9 @@ package io.github.kotlinmania.chrono
  *
  * Implemented as a bitmask where bits 1-7 correspond to Monday-Sunday.
  */
-class WeekdaySet internal constructor(internal var bits: Int) : Comparable<WeekdaySet> {
+class WeekdaySet internal constructor(
+    internal var bits: Int,
+) : Comparable<WeekdaySet> {
     // Invariant: only the low 7 bits are used; the 8-th bit is always 0.
 
     /**
@@ -24,16 +26,17 @@ class WeekdaySet internal constructor(internal var bits: Int) : Comparable<Weekd
      * check(WeekdaySet.ALL.singleDay() == null)
      * ```
      */
-    fun singleDay(): Weekday? = when (bits) {
-        0b000_0001 -> Weekday.Mon
-        0b000_0010 -> Weekday.Tue
-        0b000_0100 -> Weekday.Wed
-        0b000_1000 -> Weekday.Thu
-        0b001_0000 -> Weekday.Fri
-        0b010_0000 -> Weekday.Sat
-        0b100_0000 -> Weekday.Sun
-        else -> null
-    }
+    fun singleDay(): Weekday? =
+        when (bits) {
+            0b000_0001 -> Weekday.Mon
+            0b000_0010 -> Weekday.Tue
+            0b000_0100 -> Weekday.Wed
+            0b000_1000 -> Weekday.Thu
+            0b001_0000 -> Weekday.Fri
+            0b010_0000 -> Weekday.Sat
+            0b100_0000 -> Weekday.Sun
+            else -> null
+        }
 
     /**
      * Adds a day to the collection.
@@ -325,15 +328,16 @@ class WeekdaySet internal constructor(internal var bits: Int) : Comparable<Weekd
         }
 
         /** Create a `WeekdaySet` from a single [Weekday]. */
-        fun single(weekday: Weekday): WeekdaySet = when (weekday) {
-            Weekday.Mon -> WeekdaySet(0b000_0001)
-            Weekday.Tue -> WeekdaySet(0b000_0010)
-            Weekday.Wed -> WeekdaySet(0b000_0100)
-            Weekday.Thu -> WeekdaySet(0b000_1000)
-            Weekday.Fri -> WeekdaySet(0b001_0000)
-            Weekday.Sat -> WeekdaySet(0b010_0000)
-            Weekday.Sun -> WeekdaySet(0b100_0000)
-        }
+        fun single(weekday: Weekday): WeekdaySet =
+            when (weekday) {
+                Weekday.Mon -> WeekdaySet(0b000_0001)
+                Weekday.Tue -> WeekdaySet(0b000_0010)
+                Weekday.Wed -> WeekdaySet(0b000_0100)
+                Weekday.Thu -> WeekdaySet(0b000_1000)
+                Weekday.Fri -> WeekdaySet(0b001_0000)
+                Weekday.Sat -> WeekdaySet(0b010_0000)
+                Weekday.Sun -> WeekdaySet(0b100_0000)
+            }
 
         /**
          * Build a `WeekdaySet` by folding the [Weekday]s of [iterable] together.
@@ -357,7 +361,6 @@ class WeekdaySetIter internal constructor(
     private val days: WeekdaySet,
     private val start: Weekday,
 ) : Iterator<Weekday> {
-
     override fun hasNext(): Boolean = !days.isEmpty()
 
     override fun next(): Weekday {

@@ -14,20 +14,21 @@ internal fun defaultLocale(): Locale = Locale.POSIX
 internal fun shortMonths(locale: Locale): List<String> =
     listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-internal fun longMonths(locale: Locale): List<String> = listOf(
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-)
+internal fun longMonths(locale: Locale): List<String> =
+    listOf(
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    )
 
 internal fun shortWeekdays(locale: Locale): List<String> =
     listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")

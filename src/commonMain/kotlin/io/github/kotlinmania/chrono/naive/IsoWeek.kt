@@ -8,7 +8,9 @@ package io.github.kotlinmania.chrono.naive
  * Existing [io.github.kotlinmania.chrono.Datelike] types can retrieve this
  * type through [io.github.kotlinmania.chrono.Datelike.isoWeek].
  */
-data class IsoWeek internal constructor(private val ywf: Int) : Comparable<IsoWeek> {
+data class IsoWeek internal constructor(
+    private val ywf: Int,
+) : Comparable<IsoWeek> {
     /**
      * Returns the year number for this ISO week.
      *
@@ -42,11 +44,12 @@ data class IsoWeek internal constructor(private val ywf: Int) : Comparable<IsoWe
     override fun toString(): String {
         val year = year()
         val week = week().toInt()
-        val formattedYear = if (year in 0..9999) {
-            year.toString().padStart(4, '0')
-        } else {
-            formatSignedYear(year)
-        }
+        val formattedYear =
+            if (year in 0..9999) {
+                year.toString().padStart(4, '0')
+            } else {
+                formatSignedYear(year)
+            }
         return "$formattedYear-W${week.toString().padStart(2, '0')}"
     }
 
@@ -59,17 +62,18 @@ data class IsoWeek internal constructor(private val ywf: Int) : Comparable<IsoWe
          */
         internal fun fromYof(year: Int, ordinal: UInt, yearFlags: YearFlags): IsoWeek {
             val rawWeek = (ordinal + yearFlags.isoweekDelta()) / 7u
-            val (weekYear, week) = if (rawWeek < 1u) {
-                val previousLastWeek = YearFlags.fromYear(year - 1).nisoweeks()
-                (year - 1) to previousLastWeek
-            } else {
-                val lastWeek = yearFlags.nisoweeks()
-                if (rawWeek > lastWeek) {
-                    (year + 1) to 1u
+            val (weekYear, week) =
+                if (rawWeek < 1u) {
+                    val previousLastWeek = YearFlags.fromYear(year - 1).nisoweeks()
+                    (year - 1) to previousLastWeek
                 } else {
-                    year to rawWeek
+                    val lastWeek = yearFlags.nisoweeks()
+                    if (rawWeek > lastWeek) {
+                        (year + 1) to 1u
+                    } else {
+                        year to rawWeek
+                    }
                 }
-            }
             val flags = YearFlags.fromYear(weekYear)
             return IsoWeek((weekYear shl 10) or (week.toInt() shl 4) or flags.value.toInt())
         }
