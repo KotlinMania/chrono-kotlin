@@ -46,7 +46,7 @@ interface Datelike<Self : Datelike<Self>> {
      *
      * The return value ranges from 1 to 4.
      */
-    fun quarter(): UInt = (Math.floorDiv(month().toInt() - 1, 3) + 1).toUInt()
+    fun quarter(): UInt = (((month().toInt() - 1) / 3) + 1).toUInt()
 
     /**
      * Returns the month number starting from 1.

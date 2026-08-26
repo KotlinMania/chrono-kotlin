@@ -108,6 +108,7 @@ enum class Month {
     fun numberFromMonth(): UInt = (ordinal + 1).toUInt()
 
     /** Gets the name of the month. */
+    @kotlin.jvm.JvmName("monthName")
     fun name(): String =
         when (this) {
             January -> "January"
