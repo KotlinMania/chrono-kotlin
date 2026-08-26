@@ -8,6 +8,7 @@ package io.github.kotlinmania.chrono.naive
  * Existing [io.github.kotlinmania.chrono.Datelike] types can retrieve this
  * type through [io.github.kotlinmania.chrono.Datelike.isoWeek].
  */
+@ConsistentCopyVisibility
 data class IsoWeek internal constructor(
     private val ywf: Int,
 ) : Comparable<IsoWeek> {

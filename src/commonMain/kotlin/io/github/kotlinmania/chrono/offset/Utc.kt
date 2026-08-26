@@ -21,6 +21,7 @@ data object Utc : TimeZone<Utc>, Offset {
      * Returns a `Date` which corresponds to the current date.
      */
     @Deprecated("Use Utc.now() instead, potentially with dateNaive().")
+    @Suppress("DEPRECATION")
     fun today(): Date<Utc> = now().date()
 
     /**
@@ -32,7 +33,7 @@ data object Utc : TimeZone<Utc>, Offset {
      */
     fun now(): DateTime<Utc> {
         val now = Clock.System.now()
-        return DateTime.fromTimestamp(now.epochSeconds, now.nanosecondsOfSecond.toUInt()).getOrThrow()
+        return DateTime.fromTimestamp(now.epochSeconds, now.nanosecondsOfSecond.toUInt())!!
     }
 
     override fun fromOffset(state: Utc): Utc = Utc
