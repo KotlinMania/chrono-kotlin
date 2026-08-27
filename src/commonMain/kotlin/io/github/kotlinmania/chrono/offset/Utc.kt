@@ -16,7 +16,7 @@ import kotlin.time.Clock
  * Using the [TimeZone] methods on [Utc] is the preferred way to construct
  * UTC date-time instances.
  */
-data object Utc : TimeZone<Utc>, Offset {
+data object Utc : TimeZone, Offset {
     /**
      * Returns a `Date` which corresponds to the current date.
      */
@@ -36,7 +36,7 @@ data object Utc : TimeZone<Utc>, Offset {
         return DateTime.fromTimestamp(now.epochSeconds, now.nanosecondsOfSecond.toUInt())!!
     }
 
-    override fun fromOffset(state: Utc): Utc = Utc
+    override fun fromOffset(state: TimeZone): TimeZone = Utc
 
     override fun offsetFromLocalDate(local: NaiveDate): MappedLocalTime<Utc> = MappedLocalTime.Single(Utc)
 

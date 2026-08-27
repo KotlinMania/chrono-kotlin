@@ -9,34 +9,31 @@ import io.github.kotlinmania.chrono.naive.NaiveDateTime
 /**
  * The time zone, which calculates offsets from local time to UTC.
  */
-interface TimeZone<Tz : TimeZone<Tz>> {
-    fun fromOffset(state: Tz): Tz
+interface TimeZone {
+    fun fromOffset(state: TimeZone): TimeZone
 
-    fun offsetFromLocalDate(local: NaiveDate): MappedLocalTime<Tz>
+    fun offsetFromLocalDate(local: NaiveDate): MappedLocalTime<TimeZone>
 
-    fun offsetFromLocalDatetime(local: NaiveDateTime): MappedLocalTime<Tz>
+    fun offsetFromLocalDatetime(local: NaiveDateTime): MappedLocalTime<TimeZone>
 
-    fun offsetFromUtcDate(utc: NaiveDate): Tz
+    fun offsetFromUtcDate(utc: NaiveDate): TimeZone
 
-    fun offsetFromUtcDatetime(utc: NaiveDateTime): Tz
+    fun offsetFromUtcDatetime(utc: NaiveDateTime): TimeZone
 
-    fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<Tz>> {
+    fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<TimeZone>> {
         return offsetFromLocalDatetime(local).andThen { offset ->
             val fixed = (offset as? Offset)?.fix() ?: (this as? Offset)?.fix() ?: FixedOffset.east(0)
             val opt = local.checkedSubOffset(fixed)
             if (opt != null) {
-                @Suppress("UNCHECKED_CAST")
-                MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(opt, this as Tz))
+                MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(opt, this))
             } else {
                 MappedLocalTime.None
             }
         }
     }
 
-    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<Tz> {
-        val offset = offsetFromUtcDatetime(utc)
-        @Suppress("UNCHECKED_CAST")
-        return DateTime.fromNaiveUtcAndOffset(utc, this as Tz)
+    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<TimeZone> {
+        return DateTime.fromNaiveUtcAndOffset(utc, this)
     }
 
     fun withYmdAndHms(
@@ -46,7 +43,7 @@ interface TimeZone<Tz : TimeZone<Tz>> {
         hour: UInt,
         min: UInt,
         sec: UInt,
-    ): MappedLocalTime<DateTime<Tz>> {
+    ): MappedLocalTime<DateTime<TimeZone>> {
         val d = NaiveDate.fromYmdOpt(year, month, day) ?: return MappedLocalTime.None
         val dt = d.andHmsOpt(hour, min, sec) ?: return MappedLocalTime.None
         return fromLocalDatetime(dt)

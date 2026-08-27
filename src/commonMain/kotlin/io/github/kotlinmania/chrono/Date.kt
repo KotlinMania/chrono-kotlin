@@ -12,7 +12,7 @@ import io.github.kotlinmania.chrono.offset.Utc
  */
 @Deprecated("Use NaiveDate or DateTime<Tz> instead")
 @Suppress("DEPRECATION")
-class Date<Tz : TimeZone<Tz>> internal constructor(
+class Date<Tz : TimeZone> internal constructor(
     internal val date: NaiveDate,
     internal val offset: Tz,
 ) : Datelike<Date<Tz>>, Comparable<Date<*>> {
@@ -25,7 +25,9 @@ class Date<Tz : TimeZone<Tz>> internal constructor(
 
     fun andTime(time: NaiveTime): DateTime<Tz>? {
         val localDt = naiveLocal().andTime(time)
-        return timezone().fromLocalDatetime(localDt).single()
+        val fixed = (offset as? io.github.kotlinmania.chrono.offset.Offset)?.fix() ?: io.github.kotlinmania.chrono.offset.FixedOffset.east(0)
+        val utc = localDt.checkedSubOffset(fixed) ?: return null
+        return DateTime(utc, offset)
     }
 
     fun andHmsOpt(hour: UInt, min: UInt, sec: UInt): DateTime<Tz>? {
@@ -107,7 +109,13 @@ class Date<Tz : TimeZone<Tz>> internal constructor(
     override fun toString(): String = "$date$offset"
 
     companion object {
-        fun <Tz : TimeZone<Tz>> fromUtc(date: NaiveDate, offset: Tz): Date<Tz> =
+        fun fromUtc(date: NaiveDate, offset: Utc): Date<Utc> =
+            Date(date, offset)
+
+        fun fromUtc(date: NaiveDate, offset: io.github.kotlinmania.chrono.offset.FixedOffset): Date<io.github.kotlinmania.chrono.offset.FixedOffset> =
+            Date(date, offset)
+
+        fun fromUtc(date: NaiveDate, offset: TimeZone): Date<TimeZone> =
             Date(date, offset)
     }
 }

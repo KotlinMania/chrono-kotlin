@@ -160,8 +160,18 @@ class NaiveDateTime(
     /** Creates a [DateTime] with [Utc] timezone. */
     fun andUtc(): DateTime<Utc> = DateTime.fromNaiveUtcAndOffset(this, Utc)
 
+    /** Maps this local datetime to a [DateTime] in Utc timezone. */
+    @Suppress("UNCHECKED_CAST")
+    fun andLocalTimezone(tz: Utc): MappedLocalTime<DateTime<Utc>> =
+        tz.fromLocalDatetime(this) as MappedLocalTime<DateTime<Utc>>
+
+    /** Maps this local datetime to a [DateTime] in FixedOffset timezone. */
+    @Suppress("UNCHECKED_CAST")
+    fun andLocalTimezone(tz: io.github.kotlinmania.chrono.offset.FixedOffset): MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.FixedOffset>> =
+        tz.fromLocalDatetime(this) as MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.FixedOffset>>
+
     /** Maps this local datetime to a [DateTime] in the specified timezone. */
-    fun <Tz : TimeZone<Tz>> andLocalTimezone(tz: Tz): MappedLocalTime<DateTime<Tz>> =
+    fun andLocalTimezone(tz: TimeZone): MappedLocalTime<DateTime<TimeZone>> =
         tz.fromLocalDatetime(this)
 
     /** Returns the UNIX timestamp in seconds. */

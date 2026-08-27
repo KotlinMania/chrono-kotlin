@@ -9,12 +9,12 @@ import io.github.kotlinmania.chrono.naive.NaiveDateTime
  */
 class FixedOffset private constructor(
     val localMinusUtc: Int,
-) : TimeZone<FixedOffset>, Offset {
+) : TimeZone, Offset {
 
     /** Returns the number of seconds to add to convert from the local time to UTC. */
     fun utcMinusLocal(): Int = -localMinusUtc
 
-    override fun fromOffset(state: FixedOffset): FixedOffset = state
+    override fun fromOffset(state: TimeZone): TimeZone = state
 
     override fun offsetFromLocalDate(local: NaiveDate): MappedLocalTime<FixedOffset> =
         MappedLocalTime.Single(this)

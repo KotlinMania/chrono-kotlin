@@ -14,7 +14,7 @@ import io.github.kotlinmania.chrono.offset.Utc
 /**
  * ISO 8601 combined date and time with time zone.
  */
-class DateTime<Tz : TimeZone<Tz>> internal constructor(
+class DateTime<Tz : TimeZone> internal constructor(
     internal val datetime: NaiveDateTime, // in UTC
     internal val offset: Tz,
 ) : Datelike<DateTime<Tz>>, Timelike<DateTime<Tz>>, Comparable<DateTime<*>> {
@@ -74,7 +74,7 @@ class DateTime<Tz : TimeZone<Tz>> internal constructor(
 
     @Deprecated("Use dateNaive() instead")
     @Suppress("DEPRECATION")
-    fun date(): Date<Tz> = Date.fromUtc(dateNaive(), offset)
+    fun date(): Date<Tz> = Date(dateNaive(), offset)
 
     override fun year(): Int = naiveLocal().year()
 
@@ -98,26 +98,32 @@ class DateTime<Tz : TimeZone<Tz>> internal constructor(
 
     override fun numDaysFromCe(): Int = naiveLocal().numDaysFromCe()
 
+    private fun fromLocal(local: NaiveDateTime): DateTime<Tz>? {
+        val fixed = (offset as? io.github.kotlinmania.chrono.offset.Offset)?.fix() ?: FixedOffset.east(0)
+        val utc = local.checkedSubOffset(fixed) ?: return null
+        return DateTime(utc, offset)
+    }
+
     override fun withYear(year: Int): DateTime<Tz>? =
-        naiveLocal().withYear(year)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withYear(year)?.let { fromLocal(it) }
 
     override fun withMonth(month: UInt): DateTime<Tz>? =
-        naiveLocal().withMonth(month)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withMonth(month)?.let { fromLocal(it) }
 
     override fun withMonth0(month0: UInt): DateTime<Tz>? =
-        naiveLocal().withMonth0(month0)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withMonth0(month0)?.let { fromLocal(it) }
 
     override fun withDay(day: UInt): DateTime<Tz>? =
-        naiveLocal().withDay(day)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withDay(day)?.let { fromLocal(it) }
 
     override fun withDay0(day0: UInt): DateTime<Tz>? =
-        naiveLocal().withDay0(day0)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withDay0(day0)?.let { fromLocal(it) }
 
     override fun withOrdinal(ordinal: UInt): DateTime<Tz>? =
-        naiveLocal().withOrdinal(ordinal)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withOrdinal(ordinal)?.let { fromLocal(it) }
 
     override fun withOrdinal0(ordinal0: UInt): DateTime<Tz>? =
-        naiveLocal().withOrdinal0(ordinal0)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withOrdinal0(ordinal0)?.let { fromLocal(it) }
 
     override fun hour(): UInt = time().hour()
 
@@ -128,16 +134,16 @@ class DateTime<Tz : TimeZone<Tz>> internal constructor(
     override fun nanosecond(): UInt = time().nanosecond()
 
     override fun withHour(hour: UInt): DateTime<Tz>? =
-        naiveLocal().withHour(hour)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withHour(hour)?.let { fromLocal(it) }
 
     override fun withMinute(min: UInt): DateTime<Tz>? =
-        naiveLocal().withMinute(min)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withMinute(min)?.let { fromLocal(it) }
 
     override fun withSecond(sec: UInt): DateTime<Tz>? =
-        naiveLocal().withSecond(sec)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withSecond(sec)?.let { fromLocal(it) }
 
     override fun withNanosecond(nano: UInt): DateTime<Tz>? =
-        naiveLocal().withNanosecond(nano)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().withNanosecond(nano)?.let { fromLocal(it) }
 
     /** Adds a signed duration to the datetime. */
     fun checkedAddSigned(rhs: TimeDelta): DateTime<Tz>? =
@@ -149,11 +155,11 @@ class DateTime<Tz : TimeZone<Tz>> internal constructor(
 
     /** Adds months to the datetime. */
     fun checkedAddMonths(months: Months): DateTime<Tz>? =
-        naiveLocal().checkedAddMonths(months)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().checkedAddMonths(months)?.let { fromLocal(it) }
 
     /** Subtracts months from the datetime. */
     fun checkedSubMonths(months: Months): DateTime<Tz>? =
-        naiveLocal().checkedSubMonths(months)?.let { timezone().fromLocalDatetime(it).single() }
+        naiveLocal().checkedSubMonths(months)?.let { fromLocal(it) }
 
     /** Subtracts another [DateTime] from this, returning [TimeDelta]. */
     fun signedDurationSince(rhs: DateTime<*>): TimeDelta =
@@ -184,15 +190,33 @@ class DateTime<Tz : TimeZone<Tz>> internal constructor(
         return "${local}$offStr"
     }
 
+    /** Converts this [DateTime] to UTC timezone with the same UTC time. */
+    fun withTimezone(tz: Utc): DateTime<Utc> =
+        DateTime(datetime, tz)
+
+    /** Converts this [DateTime] to a fixed offset timezone with the same UTC time. */
+    fun withTimezone(tz: FixedOffset): DateTime<FixedOffset> =
+        DateTime(datetime, tz)
+
     /** Converts this [DateTime] to another timezone with the same UTC time. */
-    fun <OtherTz : TimeZone<OtherTz>> withTimezone(tz: OtherTz): DateTime<OtherTz> =
+    fun withTimezone(tz: TimeZone): DateTime<TimeZone> =
         DateTime(datetime, tz)
 
     companion object {
-        fun <Tz : TimeZone<Tz>> fromNaiveUtcAndOffset(
+        fun fromNaiveUtcAndOffset(
             datetime: NaiveDateTime,
-            offset: Tz,
-        ): DateTime<Tz> = DateTime(datetime, offset)
+            offset: Utc,
+        ): DateTime<Utc> = DateTime(datetime, offset)
+
+        fun fromNaiveUtcAndOffset(
+            datetime: NaiveDateTime,
+            offset: FixedOffset,
+        ): DateTime<FixedOffset> = DateTime(datetime, offset)
+
+        fun fromNaiveUtcAndOffset(
+            datetime: NaiveDateTime,
+            offset: TimeZone,
+        ): DateTime<TimeZone> = DateTime(datetime, offset)
 
         /** Creates a [DateTime] in [Utc] from UNIX timestamp seconds and nanoseconds. */
         fun fromTimestampOpt(secs: Long, nsecs: UInt): DateTime<Utc>? {
