@@ -2,6 +2,7 @@
 package io.github.kotlinmania.chrono
 
 import io.github.kotlinmania.chrono.naive.NaiveDate
+import kotlin.jvm.JvmInline
 
 /**
  * The month of the year.
