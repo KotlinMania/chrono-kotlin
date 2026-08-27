@@ -171,7 +171,7 @@ class NaiveDateTime(
         tz.fromLocalDatetime(this) as MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.FixedOffset>>
 
     /** Maps this local datetime to a [DateTime] in the specified timezone. */
-    fun andLocalTimezone(tz: TimeZone): MappedLocalTime<DateTime<out TimeZone>> =
+    fun andLocalTimezone(tz: TimeZone): MappedLocalTime<DateTime<TimeZone>> =
         tz.fromLocalDatetime(this)
 
     /** Returns the UNIX timestamp in seconds. */
