@@ -4,6 +4,10 @@ package io.github.kotlinmania.chrono.naive
 import io.github.kotlinmania.chrono.Months
 import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.Weekday
+import io.github.kotlinmania.serdetest.Token
+import io.github.kotlinmania.serdetest.assertDeTokens
+import io.github.kotlinmania.serdetest.assertDeTokensError
+import io.github.kotlinmania.serdetest.assertSerTokens
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -169,5 +173,105 @@ class NaiveDateTest {
         assertEquals(NaiveDate.fromYmdOpt(2022, 5u, 16u), week.firstDay())
         assertEquals(NaiveDate.fromYmdOpt(2022, 5u, 22u), week.lastDay())
         assertTrue(week.days().contains(date))
+    }
+
+    @Test
+    fun testSerdeSerialize() {
+        assertSerTokens(NaiveDate.fromYmdOpt(2014, 7u, 24u)!!, listOf(Token.Str("2014-07-24")))
+        assertSerTokens(NaiveDate.fromYmdOpt(0, 1u, 1u)!!, listOf(Token.Str("0000-01-01")))
+        assertSerTokens(NaiveDate.fromYmdOpt(-1, 12u, 31u)!!, listOf(Token.Str("-0001-12-31")))
+        assertSerTokens(NaiveDate.MIN, listOf(Token.Str("-262143-01-01")))
+        assertSerTokens(NaiveDate.MAX, listOf(Token.Str("+262142-12-31")))
+    }
+
+    @Test
+    fun testSerdeDeserialize() {
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(2016, 7u, 8u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("2016-07-08")),
+        )
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(2016, 7u, 8u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("2016-7-8")),
+        )
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(2016, 7u, 8u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("+002016-07-08")),
+        )
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(0, 1u, 1u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("0000-01-01")),
+        )
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(0, 1u, 1u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("0-1-1")),
+        )
+        assertDeTokens(
+            NaiveDate.fromYmdOpt(-1, 12u, 31u)!!,
+            NaiveDate.Companion,
+            listOf(Token.Str("-0001-12-31")),
+        )
+        assertDeTokens(
+            NaiveDate.MIN,
+            NaiveDate.Companion,
+            listOf(Token.Str("-262143-01-01")),
+        )
+        assertDeTokens(
+            NaiveDate.MAX,
+            NaiveDate.Companion,
+            listOf(Token.Str("+262142-12-31")),
+        )
+
+        // bad formats
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("")),
+            "premature end of input",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("20001231")),
+            "input contains invalid characters",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("2000-00-00")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("2000-02-30")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("2001-02-29")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("2002-002-28")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.Str("yyyy-mm-dd")),
+            "input contains invalid characters",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.I32(0)),
+            "invalid type: Signed(value=0), expected a formatted date string",
+        )
+        assertDeTokensError(
+            NaiveDate.Companion,
+            listOf(Token.F64(20.01)),
+            "invalid type: FloatValue(value=20.01), expected a formatted date string",
+        )
     }
 }

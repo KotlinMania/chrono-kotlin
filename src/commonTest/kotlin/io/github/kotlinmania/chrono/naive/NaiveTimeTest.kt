@@ -3,6 +3,10 @@ package io.github.kotlinmania.chrono.naive
 
 import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.offset.FixedOffset
+import io.github.kotlinmania.serdetest.Token
+import io.github.kotlinmania.serdetest.assertDeTokens
+import io.github.kotlinmania.serdetest.assertDeTokensError
+import io.github.kotlinmania.serdetest.assertSerTokens
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -167,5 +171,141 @@ class NaiveTimeTest {
         val negativeOffset = FixedOffset.westOpt(((2 * 60) + 3) * 60 + 4)!!
         assertEquals(Pair(hmsm(3u, 3u, 3u, 890u), 0), t.overflowingAddOffset(negativeOffset))
         assertEquals(Pair(hmsm(7u, 9u, 11u, 890u), 0), t.overflowingSubOffset(negativeOffset))
+    }
+
+    @Test
+    fun testSerdeSerialize() {
+        assertSerTokens(NaiveTime.fromHmsOpt(0u, 0u, 0u)!!, listOf(Token.Str("00:00:00")))
+        assertSerTokens(
+            NaiveTime.fromHmsMilliOpt(0u, 0u, 0u, 950u)!!,
+            listOf(Token.Str("00:00:00.950")),
+        )
+        assertSerTokens(
+            NaiveTime.fromHmsMilliOpt(0u, 0u, 59u, 1_000u)!!,
+            listOf(Token.Str("00:00:60")),
+        )
+        assertSerTokens(NaiveTime.fromHmsOpt(0u, 1u, 2u)!!, listOf(Token.Str("00:01:02")))
+        assertSerTokens(
+            NaiveTime.fromHmsNanoOpt(3u, 5u, 7u, 98765432u)!!,
+            listOf(Token.Str("03:05:07.098765432")),
+        )
+        assertSerTokens(NaiveTime.fromHmsOpt(7u, 8u, 9u)!!, listOf(Token.Str("07:08:09")))
+        assertSerTokens(
+            NaiveTime.fromHmsMicroOpt(12u, 34u, 56u, 789u)!!,
+            listOf(Token.Str("12:34:56.000789")),
+        )
+        val leap = NaiveTime.fromHmsNanoOpt(23u, 59u, 59u, 1_999_999_999u)!!
+        assertSerTokens(leap, listOf(Token.Str("23:59:60.999999999")))
+    }
+
+    @Test
+    fun testSerdeDeserialize() {
+        assertDeTokens(
+            NaiveTime.fromHmsOpt(0u, 0u, 0u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("00:00:00")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsOpt(0u, 0u, 0u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("0:0:0")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsMilliOpt(0u, 0u, 0u, 950u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("00:00:00.950")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsMilliOpt(0u, 0u, 0u, 950u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("0:0:0.95")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsMilliOpt(0u, 0u, 59u, 1_000u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("00:00:60")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsOpt(0u, 1u, 2u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("00:01:02")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsNanoOpt(3u, 5u, 7u, 98765432u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("03:05:07.098765432")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsOpt(7u, 8u, 9u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("07:08:09")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsMicroOpt(12u, 34u, 56u, 789u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("12:34:56.000789")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsNanoOpt(23u, 59u, 59u, 1_999_999_999u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("23:59:60.999999999")),
+        )
+        assertDeTokens(
+            NaiveTime.fromHmsNanoOpt(23u, 59u, 59u, 1_999_999_999u)!!,
+            NaiveTime.Companion,
+            listOf(Token.Str("23:59:60.9999999999997")),
+        )
+
+        // bad formats
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("")),
+            "premature end of input",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("000000")),
+            "input contains invalid characters",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("00:00:61")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("00:60:00")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("24:00:00")),
+            "input is out of range",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("23:59:59,1")),
+            "trailing input",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("012:34:56")),
+            "input contains invalid characters",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.Str("hh:mm:ss")),
+            "input contains invalid characters",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.I32(0)),
+            "invalid type: Signed(value=0), expected a formatted time string",
+        )
+        assertDeTokensError(
+            NaiveTime.Companion,
+            listOf(Token.I32(86399)),
+            "invalid type: Signed(value=86399), expected a formatted time string",
+        )
     }
 }

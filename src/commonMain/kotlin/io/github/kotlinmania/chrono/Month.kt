@@ -2,6 +2,13 @@
 package io.github.kotlinmania.chrono
 
 import io.github.kotlinmania.chrono.naive.NaiveDate
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.jvm.JvmInline
 
 /**
@@ -14,7 +21,7 @@ import kotlin.jvm.JvmInline
  * [Month] to an integer usable by dates. Mapping is from January as 1 through
  * December as 12.
  */
-enum class Month {
+enum class Month : Serialize {
     /** January. */
     January,
 
@@ -186,7 +193,26 @@ enum class Month {
             }
         }.toUByte()
 
-    companion object {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.collectStr(name())
+
+    companion object : Deserialize<Month> {
+        private val LONG_MONTH_SUFFIXES =
+            arrayOf(
+                "uary",
+                "ruary",
+                "ch",
+                "il",
+                "",
+                "e",
+                "y",
+                "ust",
+                "tember",
+                "ober",
+                "ember",
+                "ember",
+            )
+
         /** Converts a one-based month number to a [Month]. */
         fun tryFrom(value: UByte): Result<Month> =
             when (value.toUInt()) {
@@ -228,7 +254,64 @@ enum class Month {
                 12u -> December
                 else -> null
             }
+
+        /**
+         * Parses a string into a [Month].
+         *
+         * The parsing is case-insensitive and accepts either the 3-letter short form
+         * (e.g. `jan`) or the full month name (e.g. `january`).
+         */
+        fun fromStr(s: String): Result<Month> {
+            if (s.length < 3) {
+                return Result.failure(ParseMonthError())
+            }
+            val prefix = s.substring(0, 3).lowercase()
+            val month0 =
+                when (prefix) {
+                    "jan" -> 0
+                    "feb" -> 1
+                    "mar" -> 2
+                    "apr" -> 3
+                    "may" -> 4
+                    "jun" -> 5
+                    "jul" -> 6
+                    "aug" -> 7
+                    "sep" -> 8
+                    "oct" -> 9
+                    "nov" -> 10
+                    "dec" -> 11
+                    else -> return Result.failure(ParseMonthError())
+                }
+            var rest = s.substring(3)
+            val suffix = LONG_MONTH_SUFFIXES[month0]
+            if (rest.length >= suffix.length &&
+                rest.substring(0, suffix.length).equals(suffix, ignoreCase = true)
+            ) {
+                rest = rest.substring(suffix.length)
+            }
+            if (rest.isNotEmpty()) {
+                return Result.failure(ParseMonthError())
+            }
+            return Result.success(entries[month0])
+        }
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<Month> where D : Deserializer =
+            deserializer.deserializeStr(MonthVisitor)
     }
+}
+
+private object MonthVisitor : Visitor<Month> {
+    override fun expecting(): String = "Month"
+
+    override fun visitStr(v: String): SerdeResult<Month> =
+        Month.fromStr(v).fold(
+            onSuccess = { SerdeResult.Success(it) },
+            onFailure = {
+                SerdeResult.Failure(
+                    SerdeError.custom("short (3-letter) or full month names expected"),
+                )
+            },
+        )
 }
 
 /** A duration in calendar months. */

@@ -1,6 +1,17 @@
 // port-lint: source time_delta.rs
 package io.github.kotlinmania.chrono
 
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeException
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serde.serdeCatching
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.DeserializeSeed
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.SeqAccess
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.math.abs
 
 private const val NANOS_PER_MICRO: Int = 1000
@@ -21,7 +32,8 @@ private const val SECS_PER_WEEK: Long = 604_800L
 data class TimeDelta(
     val secs: Long,
     val nanos: Int, // Always 0 <= nanos < NANOS_PER_SEC
-) : Comparable<TimeDelta> {
+) : Comparable<TimeDelta>,
+    Serialize {
     /** Returns the total number of whole weeks in the [TimeDelta]. */
     fun numWeeks(): Long = numDays() / 7L
 
@@ -132,7 +144,15 @@ data class TimeDelta(
         }
     }
 
-    companion object {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serdeCatching {
+            val tuple = serializer.serializeTuple(2).getOrThrow()
+            tuple.serializeElement(SerializeLong(secs)).getOrThrow()
+            tuple.serializeElement(SerializeInt(nanos)).getOrThrow()
+            tuple.end().getOrThrow()
+        }
+
+    companion object : Deserialize<TimeDelta> {
         /** The minimum possible [TimeDelta]: `-Long.MAX_VALUE` milliseconds. */
         val MIN: TimeDelta =
             TimeDelta(
@@ -233,7 +253,58 @@ data class TimeDelta(
 
         /** Makes a new [TimeDelta] with a value of zero. */
         fun zero(): TimeDelta = TimeDelta(0L, 0)
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<TimeDelta> where D : Deserializer =
+            deserializer.deserializeTuple(2, TimeDeltaVisitor)
     }
+}
+
+private class SerializeLong(
+    private val value: Long,
+) : Serialize {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI64(value)
+}
+
+private class SerializeInt(
+    private val value: Int,
+) : Serialize {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.serializeI32(value)
+}
+
+private object TimeDeltaLongSeed : DeserializeSeed<Long>, Visitor<Long> {
+    override fun <D> deserialize(deserializer: D): SerdeResult<Long> where D : Deserializer =
+        deserializer.deserializeI64(this)
+
+    override fun expecting(): String = "an i64"
+
+    override fun visitI64(v: Long): SerdeResult<Long> = SerdeResult.Success(v)
+}
+
+private object TimeDeltaIntSeed : DeserializeSeed<Int>, Visitor<Int> {
+    override fun <D> deserialize(deserializer: D): SerdeResult<Int> where D : Deserializer =
+        deserializer.deserializeI32(this)
+
+    override fun expecting(): String = "an i32"
+
+    override fun visitI32(v: Int): SerdeResult<Int> = SerdeResult.Success(v)
+}
+
+private object TimeDeltaVisitor : Visitor<TimeDelta> {
+    override fun expecting(): String = "a tuple of size 2"
+
+    override fun <A> visitSeq(access: A): SerdeResult<TimeDelta> where A : SeqAccess =
+        serdeCatching {
+            val secs =
+                access.nextElementSeed(TimeDeltaLongSeed).getOrThrow()
+                    ?: throw SerdeException(SerdeError.invalidLength(0, this))
+            val nanos =
+                access.nextElementSeed(TimeDeltaIntSeed).getOrThrow()
+                    ?: throw SerdeException(SerdeError.invalidLength(1, this))
+            TimeDelta.new(secs, nanos.toUInt())
+                ?: throw SerdeException(SerdeError.custom("TimeDelta out of bounds"))
+        }
 }
 
 private fun divModFloor64(a: Long, b: Long): Pair<Long, Long> {

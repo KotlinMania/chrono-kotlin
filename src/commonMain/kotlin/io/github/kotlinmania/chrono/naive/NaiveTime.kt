@@ -3,6 +3,14 @@ package io.github.kotlinmania.chrono.naive
 
 import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.Timelike
+import io.github.kotlinmania.chrono.format.parseNaiveTime
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * ISO 8601 time without timezone.
@@ -13,7 +21,8 @@ class NaiveTime internal constructor(
     internal val secs: UInt, // 0..86399
     internal val frac: UInt, // 0..1_999_999_999 (>= 1_000_000_000 indicates leap second)
 ) : Timelike<NaiveTime>,
-    Comparable<NaiveTime> {
+    Comparable<NaiveTime>,
+    Serialize {
     override fun hour(): UInt = secs / 3600u
 
     override fun minute(): UInt = (secs % 3600u) / 60u
@@ -151,20 +160,43 @@ class NaiveTime internal constructor(
     override fun toString(): String {
         val h = hour().toString().padStart(2, '0')
         val m = minute().toString().padStart(2, '0')
-        val s = second().toString().padStart(2, '0')
-        return if (frac == 0u) {
-            "$h:$m:$s"
-        } else {
-            val nanoStr = frac.toString().padStart(9, '0').trimEnd('0')
-            "$h:$m:$s.$nanoStr"
+        val (sec, nano) =
+            if (frac >= 1_000_000_000u) {
+                (second() + 1u) to (frac - 1_000_000_000u)
+            } else {
+                second() to frac
+            }
+        val s = sec.toString().padStart(2, '0')
+        return when {
+            nano == 0u -> {
+                "$h:$m:$s"
+            }
+
+            nano % 1_000_000u == 0u -> {
+                val milliStr = (nano / 1_000_000u).toString().padStart(3, '0')
+                "$h:$m:$s.$milliStr"
+            }
+
+            nano % 1_000u == 0u -> {
+                val microStr = (nano / 1_000u).toString().padStart(6, '0')
+                "$h:$m:$s.$microStr"
+            }
+
+            else -> {
+                val nanoStr = nano.toString().padStart(9, '0')
+                "$h:$m:$s.$nanoStr"
+            }
         }
     }
 
-    companion object {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.collectStr(toString())
+
+    companion object : Deserialize<NaiveTime> {
         /** The earliest possible [NaiveTime]: 00:00:00. */
         val MIN: NaiveTime = NaiveTime(0u, 0u)
 
-        /** The latest possible non-leap [NaiveTime]: 23:59:59.999999999. */
+        /** The latest possible [NaiveTime]: 23:59:59.999999999 (or 23:59:60.999999999 leap). */
         val MAX: NaiveTime = NaiveTime(86399u, 1_999_999_999u)
 
         /** Makes a new [NaiveTime] from hour, minute and second. */
@@ -202,9 +234,25 @@ class NaiveTime internal constructor(
         /** Makes a new [NaiveTime] from seconds and nanoseconds from midnight. */
         fun fromNumSecondsFromMidnightOpt(secs: UInt, nano: UInt): NaiveTime? {
             if (secs >= 86_400u) return null
-            val isLeap = secs == 86399u && nano >= 1_000_000_000u
+            val isLeap = secs % 60u == 59u && nano >= 1_000_000_000u
             if (nano >= 2_000_000_000u || (!isLeap && nano >= 1_000_000_000u)) return null
             return NaiveTime(secs, nano)
         }
+
+        /** Parses a string into a [NaiveTime] using the `%H:%M:%S%.f` format. */
+        fun fromStr(s: String): Result<NaiveTime> = parseNaiveTime(s)
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<NaiveTime> where D : Deserializer =
+            deserializer.deserializeStr(NaiveTimeVisitor)
     }
+}
+
+private object NaiveTimeVisitor : Visitor<NaiveTime> {
+    override fun expecting(): String = "a formatted time string"
+
+    override fun visitStr(v: String): SerdeResult<NaiveTime> =
+        NaiveTime.fromStr(v).fold(
+            onSuccess = { SerdeResult.Success(it) },
+            onFailure = { SerdeResult.Failure(SerdeError.custom(it.toString())) },
+        )
 }
