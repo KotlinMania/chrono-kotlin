@@ -133,23 +133,57 @@ enum class Month {
      */
     fun numDays(year: Int): UByte? =
         when (this) {
-            January -> 31u
-            February ->
+            January -> {
+                31u
+            }
+
+            February -> {
                 when (NaiveDate.fromYmdOpt(year, 2u, 1u)?.leapYear()) {
                     true -> 29u
                     false -> 28u
                     null -> return null
                 }
-            March -> 31u
-            April -> 30u
-            May -> 31u
-            June -> 30u
-            July -> 31u
-            August -> 31u
-            September -> 30u
-            October -> 31u
-            November -> 30u
-            December -> 31u
+            }
+
+            March -> {
+                31u
+            }
+
+            April -> {
+                30u
+            }
+
+            May -> {
+                31u
+            }
+
+            June -> {
+                30u
+            }
+
+            July -> {
+                31u
+            }
+
+            August -> {
+                31u
+            }
+
+            September -> {
+                30u
+            }
+
+            October -> {
+                31u
+            }
+
+            November -> {
+                30u
+            }
+
+            December -> {
+                31u
+            }
         }.toUByte()
 
     companion object {

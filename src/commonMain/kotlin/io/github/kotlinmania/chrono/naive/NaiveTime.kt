@@ -12,8 +12,8 @@ import io.github.kotlinmania.chrono.Timelike
 class NaiveTime internal constructor(
     internal val secs: UInt, // 0..86399
     internal val frac: UInt, // 0..1_999_999_999 (>= 1_000_000_000 indicates leap second)
-) : Timelike<NaiveTime>, Comparable<NaiveTime> {
-
+) : Timelike<NaiveTime>,
+    Comparable<NaiveTime> {
     override fun hour(): UInt = secs / 3600u
 
     override fun minute(): UInt = (secs % 3600u) / 60u

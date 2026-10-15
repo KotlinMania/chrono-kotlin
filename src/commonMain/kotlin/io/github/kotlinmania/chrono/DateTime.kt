@@ -1,13 +1,11 @@
 // port-lint: source src/datetime/mod.rs
 package io.github.kotlinmania.chrono
 
-import io.github.kotlinmania.chrono.naive.Days
 import io.github.kotlinmania.chrono.naive.IsoWeek
 import io.github.kotlinmania.chrono.naive.NaiveDate
 import io.github.kotlinmania.chrono.naive.NaiveDateTime
 import io.github.kotlinmania.chrono.naive.NaiveTime
 import io.github.kotlinmania.chrono.offset.FixedOffset
-import io.github.kotlinmania.chrono.offset.MappedLocalTime
 import io.github.kotlinmania.chrono.offset.TimeZone
 import io.github.kotlinmania.chrono.offset.Utc
 
@@ -17,16 +15,18 @@ import io.github.kotlinmania.chrono.offset.Utc
 class DateTime<Tz : TimeZone> internal constructor(
     internal val datetime: NaiveDateTime, // in UTC
     internal val offset: Tz,
-) : Datelike<DateTime<Tz>>, Timelike<DateTime<Tz>>, Comparable<DateTime<*>> {
-
+) : Datelike<DateTime<Tz>>,
+    Timelike<DateTime<Tz>>,
+    Comparable<DateTime<*>> {
     /** Returns the UTC [NaiveDateTime]. */
     fun naiveUtc(): NaiveDateTime = datetime
 
     /** Returns the local [NaiveDateTime]. */
     fun naiveLocal(): NaiveDateTime {
-        val fixed = (offset as? FixedOffset) ?: offset.offsetFromUtcDatetime(datetime).let {
-            if (it is FixedOffset) it else (offset as io.github.kotlinmania.chrono.offset.Offset).fix()
-        }
+        val fixed =
+            (offset as? FixedOffset) ?: offset.offsetFromUtcDatetime(datetime).let {
+                if (it is FixedOffset) it else (offset as io.github.kotlinmania.chrono.offset.Offset).fix()
+            }
         return datetime.checkedAddOffset(fixed) ?: datetime
     }
 

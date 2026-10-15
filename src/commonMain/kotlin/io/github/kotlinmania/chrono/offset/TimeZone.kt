@@ -1,7 +1,6 @@
 // port-lint: source offset/mod.rs
 package io.github.kotlinmania.chrono.offset
 
-import io.github.kotlinmania.chrono.Date
 import io.github.kotlinmania.chrono.DateTime
 import io.github.kotlinmania.chrono.naive.NaiveDate
 import io.github.kotlinmania.chrono.naive.NaiveDateTime
@@ -20,8 +19,8 @@ interface TimeZone {
 
     fun offsetFromUtcDatetime(utc: NaiveDateTime): TimeZone
 
-    fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<TimeZone>> {
-        return offsetFromLocalDatetime(local).andThen { offset ->
+    fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<TimeZone>> =
+        offsetFromLocalDatetime(local).andThen { offset ->
             val fixed = (offset as? Offset)?.fix() ?: (this as? Offset)?.fix() ?: FixedOffset.east(0)
             val opt = local.checkedSubOffset(fixed)
             if (opt != null) {
@@ -30,11 +29,8 @@ interface TimeZone {
                 MappedLocalTime.None
             }
         }
-    }
 
-    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<TimeZone> {
-        return DateTime.fromNaiveUtcAndOffset(utc, this)
-    }
+    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<TimeZone> = DateTime.fromNaiveUtcAndOffset(utc, this)
 
     fun withYmdAndHms(
         year: Int,
