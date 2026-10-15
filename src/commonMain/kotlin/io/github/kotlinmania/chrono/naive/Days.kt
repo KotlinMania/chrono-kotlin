@@ -11,7 +11,9 @@ import kotlin.jvm.JvmInline
  * number of seconds.
  */
 @JvmInline
-value class Days(val num: ULong) : Comparable<Days> {
+value class Days(
+    val num: ULong,
+) : Comparable<Days> {
     override fun compareTo(other: Days): Int = num.compareTo(other.num)
 
     companion object {

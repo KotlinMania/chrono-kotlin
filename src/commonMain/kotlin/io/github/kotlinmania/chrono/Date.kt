@@ -15,8 +15,8 @@ import io.github.kotlinmania.chrono.offset.Utc
 class Date<Tz : TimeZone> internal constructor(
     internal val date: NaiveDate,
     internal val offset: Tz,
-) : Datelike<Date<Tz>>, Comparable<Date<*>> {
-
+) : Datelike<Date<Tz>>,
+    Comparable<Date<*>> {
     fun naiveUtc(): NaiveDate = date
 
     fun naiveLocal(): NaiveDate = date
@@ -25,7 +25,9 @@ class Date<Tz : TimeZone> internal constructor(
 
     fun andTime(time: NaiveTime): DateTime<Tz>? {
         val localDt = naiveLocal().andTime(time)
-        val fixed = (offset as? io.github.kotlinmania.chrono.offset.Offset)?.fix() ?: io.github.kotlinmania.chrono.offset.FixedOffset.east(0)
+        val fixed =
+            (offset as? io.github.kotlinmania.chrono.offset.Offset)?.fix() ?: io.github.kotlinmania.chrono.offset.FixedOffset
+                .east(0)
         val utc = localDt.checkedSubOffset(fixed) ?: return null
         return DateTime(utc, offset)
     }

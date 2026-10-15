@@ -318,7 +318,7 @@ class WeekdaySet internal constructor(
          * ```
          */
         fun fromArray(vararg days: Weekday): WeekdaySet {
-            var acc = EMPTY
+            val acc = EMPTY
             var idx = 0
             while (idx < days.size) {
                 acc.bits = acc.bits or single(days[idx]).bits

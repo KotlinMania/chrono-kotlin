@@ -1,8 +1,8 @@
 // port-lint: source naive/datetime/mod.rs
 package io.github.kotlinmania.chrono.naive
 
-import io.github.kotlinmania.chrono.Datelike
 import io.github.kotlinmania.chrono.DateTime
+import io.github.kotlinmania.chrono.Datelike
 import io.github.kotlinmania.chrono.Month
 import io.github.kotlinmania.chrono.Months
 import io.github.kotlinmania.chrono.TimeDelta
@@ -19,8 +19,9 @@ import io.github.kotlinmania.chrono.offset.Utc
 class NaiveDateTime(
     internal val date: NaiveDate,
     internal val time: NaiveTime,
-) : Datelike<NaiveDateTime>, Timelike<NaiveDateTime>, Comparable<NaiveDateTime> {
-
+) : Datelike<NaiveDateTime>,
+    Timelike<NaiveDateTime>,
+    Comparable<NaiveDateTime> {
     /** Retrieves the date component. */
     fun date(): NaiveDate = date
 
@@ -93,22 +94,24 @@ class NaiveDateTime(
     /** Adds a [FixedOffset] to this datetime, preserving leap seconds. */
     fun checkedAddOffset(rhs: FixedOffset): NaiveDateTime? {
         val (newTime, days) = time.overflowingAddOffset(rhs)
-        val newDate = when (days) {
-            -1 -> date.predOpt() ?: return null
-            1 -> date.succOpt() ?: return null
-            else -> date
-        }
+        val newDate =
+            when (days) {
+                -1 -> date.predOpt() ?: return null
+                1 -> date.succOpt() ?: return null
+                else -> date
+            }
         return NaiveDateTime(newDate, newTime)
     }
 
     /** Subtracts a [FixedOffset] from this datetime, preserving leap seconds. */
     fun checkedSubOffset(rhs: FixedOffset): NaiveDateTime? {
         val (newTime, days) = time.overflowingSubOffset(rhs)
-        val newDate = when (days) {
-            -1 -> date.predOpt() ?: return null
-            1 -> date.succOpt() ?: return null
-            else -> date
-        }
+        val newDate =
+            when (days) {
+                -1 -> date.predOpt() ?: return null
+                1 -> date.succOpt() ?: return null
+                else -> date
+            }
         return NaiveDateTime(newDate, newTime)
     }
 

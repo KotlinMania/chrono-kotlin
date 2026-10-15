@@ -22,7 +22,6 @@ data class TimeDelta(
     val secs: Long,
     val nanos: Int, // Always 0 <= nanos < NANOS_PER_SEC
 ) : Comparable<TimeDelta> {
-
     /** Returns the total number of whole weeks in the [TimeDelta]. */
     fun numWeeks(): Long = numDays() / 7L
 
@@ -106,14 +105,13 @@ data class TimeDelta(
     operator fun minus(rhs: TimeDelta): TimeDelta =
         checkedSub(rhs) ?: throw ArithmeticException("TimeDelta - TimeDelta overflowed")
 
-    operator fun unaryMinus(): TimeDelta {
-        return if (nanos == 0) {
+    operator fun unaryMinus(): TimeDelta =
+        if (nanos == 0) {
             new(-secs, 0u) ?: throw ArithmeticException("TimeDelta negation overflow")
         } else {
             new(-secs - 1, (NANOS_PER_SEC - nanos).toUInt())
                 ?: throw ArithmeticException("TimeDelta negation overflow")
         }
-    }
 
     /** Returns the absolute value of the [TimeDelta]. */
     fun abs(): TimeDelta = if (secs < 0) -this else this
@@ -136,16 +134,18 @@ data class TimeDelta(
 
     companion object {
         /** The minimum possible [TimeDelta]: `-Long.MAX_VALUE` milliseconds. */
-        val MIN: TimeDelta = TimeDelta(
-            -Long.MAX_VALUE / MILLIS_PER_SEC - 1,
-            NANOS_PER_SEC + ((-Long.MAX_VALUE % MILLIS_PER_SEC).toInt() * NANOS_PER_MILLI),
-        )
+        val MIN: TimeDelta =
+            TimeDelta(
+                -Long.MAX_VALUE / MILLIS_PER_SEC - 1,
+                NANOS_PER_SEC + ((-Long.MAX_VALUE % MILLIS_PER_SEC).toInt() * NANOS_PER_MILLI),
+            )
 
         /** The maximum possible [TimeDelta]: `Long.MAX_VALUE` milliseconds. */
-        val MAX: TimeDelta = TimeDelta(
-            Long.MAX_VALUE / MILLIS_PER_SEC,
-            (Long.MAX_VALUE % MILLIS_PER_SEC).toInt() * NANOS_PER_MILLI,
-        )
+        val MAX: TimeDelta =
+            TimeDelta(
+                Long.MAX_VALUE / MILLIS_PER_SEC,
+                (Long.MAX_VALUE % MILLIS_PER_SEC).toInt() * NANOS_PER_MILLI,
+            )
 
         /** Makes a new [TimeDelta] with given number of seconds and nanoseconds. */
         fun new(secs: Long, nanos: UInt): TimeDelta? {

@@ -9,8 +9,8 @@ import io.github.kotlinmania.chrono.naive.NaiveDateTime
  */
 class FixedOffset private constructor(
     val localMinusUtc: Int,
-) : TimeZone, Offset {
-
+) : TimeZone,
+    Offset {
     /** Returns the number of seconds to add to convert from the local time to UTC. */
     fun utcMinusLocal(): Int = -localMinusUtc
 
@@ -57,13 +57,12 @@ class FixedOffset private constructor(
         /**
          * Makes a new [FixedOffset] for the Eastern Hemisphere with given seconds difference.
          */
-        fun eastOpt(secs: Int): FixedOffset? {
-            return if (secs > -86_400 && secs < 86_400) {
+        fun eastOpt(secs: Int): FixedOffset? =
+            if (secs > -86_400 && secs < 86_400) {
                 FixedOffset(secs)
             } else {
                 null
             }
-        }
 
         /**
          * Makes a new [FixedOffset] for the Eastern Hemisphere with given seconds difference.

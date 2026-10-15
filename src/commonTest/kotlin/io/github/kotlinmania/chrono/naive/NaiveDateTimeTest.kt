@@ -8,7 +8,6 @@ import io.github.kotlinmania.chrono.offset.Utc
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class NaiveDateTimeTest {
     @Test
@@ -29,13 +28,16 @@ class NaiveDateTimeTest {
             expectedS: UInt?,
         ) {
             val lhs = NaiveDate.fromYmdOpt(y, m, d)!!.andHmsOpt(h, n, s)!!
-            val sum = if (expectedY != null) {
-                NaiveDate.fromYmdOpt(expectedY, expectedM!!, expectedD!!)!!.andHmsOpt(
-                    expectedH!!,
-                    expectedN!!,
-                    expectedS!!,
-                )
-            } else null
+            val sum =
+                if (expectedY != null) {
+                    NaiveDate.fromYmdOpt(expectedY, expectedM!!, expectedD!!)!!.andHmsOpt(
+                        expectedH!!,
+                        expectedN!!,
+                        expectedS!!,
+                    )
+                } else {
+                    null
+                }
             assertEquals(sum, lhs.checkedAddSigned(rhs))
             assertEquals(sum, lhs.checkedSubSigned(-rhs))
         }

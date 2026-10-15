@@ -6,12 +6,10 @@ import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.Weekday
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class NaiveDateTest {
-
     @Test
     fun testDateBounds() {
         val calculatedMin = NaiveDate.fromYmdOpt(MIN_YEAR, 1u, 1u)
@@ -25,31 +23,31 @@ class NaiveDateTest {
         // identity
         assertEquals(
             NaiveDate.fromYmdOpt(2022, 8u, 3u),
-            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedAddMonths(Months.new(0u))
+            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedAddMonths(Months.new(0u)),
         )
 
         // add crossing year boundary
         assertEquals(
             NaiveDate.fromYmdOpt(2023, 2u, 3u),
-            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedAddMonths(Months.new(6u))
+            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedAddMonths(Months.new(6u)),
         )
 
         // sub crossing year boundary
         assertEquals(
             NaiveDate.fromYmdOpt(2021, 10u, 3u),
-            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedSubMonths(Months.new(10u))
+            NaiveDate.fromYmdOpt(2022, 8u, 3u)?.checkedSubMonths(Months.new(10u)),
         )
 
         // add clamping day, non-leap year
         assertEquals(
             NaiveDate.fromYmdOpt(2022, 2u, 28u),
-            NaiveDate.fromYmdOpt(2022, 1u, 29u)?.checkedAddMonths(Months.new(1u))
+            NaiveDate.fromYmdOpt(2022, 1u, 29u)?.checkedAddMonths(Months.new(1u)),
         )
 
         // add to leap day
         assertEquals(
             NaiveDate.fromYmdOpt(2024, 2u, 29u),
-            NaiveDate.fromYmdOpt(2022, 10u, 29u)?.checkedAddMonths(Months.new(16u))
+            NaiveDate.fromYmdOpt(2022, 10u, 29u)?.checkedAddMonths(Months.new(16u)),
         )
     }
 
@@ -72,6 +70,7 @@ class NaiveDateTest {
     @Test
     fun testDateFromYo() {
         val fromYo = NaiveDate.Companion::fromYoOpt
+
         fun ymd(y: Int, m: UInt, d: UInt) = NaiveDate.fromYmdOpt(y, m, d)
 
         assertEquals(null, fromYo(2012, 0u))
@@ -102,6 +101,7 @@ class NaiveDateTest {
     @Test
     fun testDateFromIsoywd() {
         val fromIsoywd = NaiveDate.Companion::fromIsoywdOpt
+
         fun ymd(y: Int, m: UInt, d: UInt) = NaiveDate.fromYmdOpt(y, m, d)
 
         assertEquals(null, fromIsoywd(2004, 0u, Weekday.Sun))
