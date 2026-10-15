@@ -10,9 +10,7 @@ import io.github.kotlinmania.chrono.offset.Utc
 /**
  * ISO 8601 calendar date with time zone.
  */
-@Deprecated("Use NaiveDate or DateTime<Tz> instead")
-@Suppress("DEPRECATION")
-class Date<Tz : TimeZone> internal constructor(
+class Date<out Tz : TimeZone> internal constructor(
     internal val date: NaiveDate,
     internal val offset: Tz,
 ) : Datelike<Date<Tz>>,

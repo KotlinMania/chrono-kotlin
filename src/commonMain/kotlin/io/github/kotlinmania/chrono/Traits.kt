@@ -24,7 +24,7 @@ import io.github.kotlinmania.chrono.naive.IsoWeek
  * For more complex changes to a date, it is best to use the methods on
  * `NaiveDate` to create a new value instead of altering an existing date.
  */
-interface Datelike<Self : Datelike<Self>> {
+interface Datelike<out Self : Datelike<Self>> {
     /** Returns the year number in the calendar date. */
     fun year(): Int
 
@@ -218,7 +218,7 @@ interface Datelike<Self : Datelike<Self>> {
 }
 
 /** The common set of methods for time components. */
-interface Timelike<Self : Timelike<Self>> {
+interface Timelike<out Self : Timelike<Self>> {
     /** Returns the hour number from 0 to 23. */
     fun hour(): UInt
 

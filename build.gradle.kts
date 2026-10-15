@@ -781,6 +781,9 @@ kotlin {
         commonMain.dependencies {
             implementation(commonMainDependencyBundle)
         }
+        mingwMain.dependencies {
+            implementation(libs.windows.sys.kotlin)
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             commonTestDependencyBundle?.let { implementation(it) }

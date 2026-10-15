@@ -24,13 +24,14 @@ interface TimeZone {
             val fixed = (offset as? Offset)?.fix() ?: (this as? Offset)?.fix() ?: FixedOffset.east(0)
             val opt = local.checkedSubOffset(fixed)
             if (opt != null) {
-                MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(opt, this))
+                MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(opt, offset))
             } else {
                 MappedLocalTime.None
             }
         }
 
-    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<TimeZone> = DateTime.fromNaiveUtcAndOffset(utc, this)
+    fun fromUtcDatetime(utc: NaiveDateTime): DateTime<TimeZone> =
+        DateTime.fromNaiveUtcAndOffset(utc, offsetFromUtcDatetime(utc))
 
     fun withYmdAndHms(
         year: Int,
@@ -45,3 +46,5 @@ interface TimeZone {
         return fromLocalDatetime(dt)
     }
 }
+
+typealias Local = io.github.kotlinmania.chrono.offset.local.Local

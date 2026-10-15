@@ -1,6 +1,7 @@
 // port-lint: source offset/fixed.rs
 package io.github.kotlinmania.chrono.offset
 
+import io.github.kotlinmania.chrono.DateTime
 import io.github.kotlinmania.chrono.naive.NaiveDate
 import io.github.kotlinmania.chrono.naive.NaiveDateTime
 
@@ -25,6 +26,27 @@ class FixedOffset private constructor(
     override fun offsetFromUtcDate(utc: NaiveDate): FixedOffset = this
 
     override fun offsetFromUtcDatetime(utc: NaiveDateTime): FixedOffset = this
+
+    override fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<FixedOffset>> {
+        val utc = local.checkedSubOffset(this) ?: return MappedLocalTime.None
+        return MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(utc, this))
+    }
+
+    override fun fromUtcDatetime(utc: NaiveDateTime): DateTime<FixedOffset> =
+        DateTime.fromNaiveUtcAndOffset(utc, this)
+
+    override fun withYmdAndHms(
+        year: Int,
+        month: UInt,
+        day: UInt,
+        hour: UInt,
+        min: UInt,
+        sec: UInt,
+    ): MappedLocalTime<DateTime<FixedOffset>> {
+        val d = NaiveDate.fromYmdOpt(year, month, day) ?: return MappedLocalTime.None
+        val dt = d.andHmsOpt(hour, min, sec) ?: return MappedLocalTime.None
+        return fromLocalDatetime(dt)
+    }
 
     override fun fix(): FixedOffset = this
 
