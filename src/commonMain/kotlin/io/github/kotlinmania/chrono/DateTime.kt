@@ -1,13 +1,24 @@
 // port-lint: source src/datetime/mod.rs
 package io.github.kotlinmania.chrono
 
+import io.github.kotlinmania.chrono.format.SecondsFormat
+import io.github.kotlinmania.chrono.format.parseRfc3339Relaxed
+import io.github.kotlinmania.chrono.format.writeRfc3339
 import io.github.kotlinmania.chrono.naive.IsoWeek
 import io.github.kotlinmania.chrono.naive.NaiveDate
 import io.github.kotlinmania.chrono.naive.NaiveDateTime
 import io.github.kotlinmania.chrono.naive.NaiveTime
 import io.github.kotlinmania.chrono.offset.FixedOffset
+import io.github.kotlinmania.chrono.offset.Offset
 import io.github.kotlinmania.chrono.offset.TimeZone
 import io.github.kotlinmania.chrono.offset.Utc
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * ISO 8601 combined date and time with time zone.
@@ -17,7 +28,8 @@ class DateTime<Tz : TimeZone> internal constructor(
     internal val offset: Tz,
 ) : Datelike<DateTime<Tz>>,
     Timelike<DateTime<Tz>>,
-    Comparable<DateTime<*>> {
+    Comparable<DateTime<*>>,
+    Serialize {
     /** Returns the UTC [NaiveDateTime]. */
     fun naiveUtc(): NaiveDateTime = datetime
 
@@ -190,6 +202,21 @@ class DateTime<Tz : TimeZone> internal constructor(
         return "${local}$offStr"
     }
 
+    /** Returns an RFC 3339 and ISO 8601 date and time string. */
+    fun toRfc3339(): String = toRfc3339Opts(SecondsFormat.AutoSi, false)
+
+    /** Returns an RFC 3339 and ISO 8601 date and time string with the specified options. */
+    fun toRfc3339Opts(secform: SecondsFormat, useZ: Boolean): String {
+        val fixed =
+            (offset as? Offset)?.fix() ?: offset.offsetFromUtcDatetime(datetime).let {
+                (it as? Offset)?.fix() ?: FixedOffset.east(0)
+            }
+        return writeRfc3339(naiveLocal(), fixed, secform, useZ)
+    }
+
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.collectStr(toRfc3339Opts(SecondsFormat.AutoSi, true))
+
     /** Converts this [DateTime] to UTC timezone with the same UTC time. */
     fun withTimezone(tz: Utc): DateTime<Utc> =
         DateTime(datetime, tz)
@@ -202,7 +229,13 @@ class DateTime<Tz : TimeZone> internal constructor(
     fun withTimezone(tz: TimeZone): DateTime<TimeZone> =
         DateTime(datetime, tz)
 
-    companion object {
+    /** Deserializer for `DateTime<Utc>`. */
+    object UtcDeserializer : Deserialize<DateTime<Utc>> {
+        override fun <D> deserialize(deserializer: D): SerdeResult<DateTime<Utc>> where D : Deserializer =
+            deserializer.deserializeStr(DateTimeVisitor).map { it.withTimezone(Utc) }
+    }
+
+    companion object : Deserialize<DateTime<FixedOffset>> {
         fun fromNaiveUtcAndOffset(
             datetime: NaiveDateTime,
             offset: Utc,
@@ -255,5 +288,28 @@ class DateTime<Tz : TimeZone> internal constructor(
             return fromTimestampOpt(secs, remNanos)
                 ?: throw IllegalArgumentException("DateTime.fromTimestampNanos out of bounds")
         }
+
+        /** Parses an RFC 3339 date-and-time string into a `DateTime<FixedOffset>`. */
+        fun parseFromRfc3339(s: String): Result<DateTime<FixedOffset>> = parseRfc3339Relaxed(s)
+
+        /** Parses a relaxed RFC 3339 string into a `DateTime<FixedOffset>`. */
+        fun fromStr(s: String): Result<DateTime<FixedOffset>> = parseRfc3339Relaxed(s)
+
+        /** Parses a relaxed RFC 3339 string into a `DateTime<Utc>`. */
+        fun fromStrUtc(s: String): Result<DateTime<Utc>> =
+            parseRfc3339Relaxed(s).map { it.withTimezone(Utc) }
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<DateTime<FixedOffset>> where D : Deserializer =
+            deserializer.deserializeStr(DateTimeVisitor)
     }
+}
+
+private object DateTimeVisitor : Visitor<DateTime<FixedOffset>> {
+    override fun expecting(): String = "an RFC 3339 formatted date and time string"
+
+    override fun visitStr(v: String): SerdeResult<DateTime<FixedOffset>> =
+        DateTime.fromStr(v).fold(
+            onSuccess = { SerdeResult.Success(it) },
+            onFailure = { SerdeResult.Failure(SerdeError.custom(it.toString())) },
+        )
 }

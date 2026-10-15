@@ -2,6 +2,10 @@
 package io.github.kotlinmania.chrono
 
 import io.github.kotlinmania.chrono.offset.Utc
+import io.github.kotlinmania.serdetest.Token
+import io.github.kotlinmania.serdetest.assertDeTokens
+import io.github.kotlinmania.serdetest.assertDeTokensError
+import io.github.kotlinmania.serdetest.assertSerTokens
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -70,8 +74,65 @@ class MonthTest {
         assertEquals(UInt.MAX_VALUE, Months.new(UInt.MAX_VALUE).asU32())
     }
 
-    // Upstream test_serde_serialize, test_serde_deserialize, and test_rkyv_validation are unported:
-    // serde and rkyv bindings are not available in commonTest without serde serialization dependencies.
+    @Test
+    fun testSerdeSerialize() {
+        val cases =
+            listOf(
+                Month.January to "January",
+                Month.February to "February",
+                Month.March to "March",
+                Month.April to "April",
+                Month.May to "May",
+                Month.June to "June",
+                Month.July to "July",
+                Month.August to "August",
+                Month.September to "September",
+                Month.October to "October",
+                Month.November to "November",
+                Month.December to "December",
+            )
+
+        for ((month, expectedStr) in cases) {
+            assertSerTokens(month, listOf(Token.Str(expectedStr)))
+        }
+    }
+
+    @Test
+    fun testSerdeDeserialize() {
+        val cases =
+            listOf(
+                "january" to Month.January,
+                "jan" to Month.January,
+                "FeB" to Month.February,
+                "MAR" to Month.March,
+                "mar" to Month.March,
+                "april" to Month.April,
+                "may" to Month.May,
+                "june" to Month.June,
+                "JULY" to Month.July,
+                "august" to Month.August,
+                "september" to Month.September,
+                "October" to Month.October,
+                "November" to Month.November,
+                "DECEmbEr" to Month.December,
+            )
+
+        for ((string, expectedMonth) in cases) {
+            assertDeTokens(expectedMonth, Month, listOf(Token.Str(string)))
+        }
+
+        val errors = listOf("not a month", "ja", "Dece", "Augustin")
+
+        for (string in errors) {
+            assertDeTokensError(
+                Month,
+                listOf(Token.Str(string)),
+                "short (3-letter) or full month names expected",
+            )
+        }
+    }
+
+    // Upstream test_rkyv_validation is unported: rkyv zero-copy archival is a Rust-specific serialization crate.
 
     @Test
     fun numDays() {

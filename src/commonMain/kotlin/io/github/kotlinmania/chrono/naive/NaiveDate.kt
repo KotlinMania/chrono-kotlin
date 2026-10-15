@@ -5,6 +5,14 @@ import io.github.kotlinmania.chrono.Datelike
 import io.github.kotlinmania.chrono.Months
 import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.Weekday
+import io.github.kotlinmania.chrono.format.parseNaiveDate
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 import kotlin.math.abs
 
 internal const val UNIX_EPOCH_DAY: Long = 719_163L
@@ -432,7 +440,8 @@ private val YEAR_DELTAS: ByteArray =
 class NaiveDate internal constructor(
     internal val yof: Int,
 ) : Datelike<NaiveDate>,
-    Comparable<NaiveDate> {
+    Comparable<NaiveDate>,
+    Serialize {
     internal fun weeksFrom(day: Weekday): Int =
         (ordinal().toInt() - weekday().daysSince(day) + 6) / 7
 
@@ -780,14 +789,17 @@ class NaiveDate internal constructor(
         return "$yrStr-$mStr-$dStr"
     }
 
-    companion object {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.collectStr(toString())
+
+    companion object : Deserialize<NaiveDate> {
         /** Create a new [NaiveDate] from a raw year-ordinal-flags [Int]. */
         internal fun fromYof(yof: Int): NaiveDate = NaiveDate(yof)
 
-        /** The minimum possible [NaiveDate] (January 1, 262145 BCE). */
+        /** The minimum possible [NaiveDate] (January 1, 262143 BCE). */
         val MIN: NaiveDate = fromYof((MIN_YEAR shl 13) or (1 shl 4) or 10)
 
-        /** The maximum possible [NaiveDate] (December 31, 262143 CE). */
+        /** The maximum possible [NaiveDate] (December 31, 262142 CE). */
         val MAX: NaiveDate = fromYof((MAX_YEAR shl 13) or (365 shl 4) or 14)
 
         /** Makes a new [NaiveDate] from year, ordinal and flags. */
@@ -895,7 +907,23 @@ class NaiveDate internal constructor(
         /** Makes a new [NaiveDate] by counting occurrences of a day-of-week in the month. */
         fun fromWeekdayOfMonth(year: Int, month: UInt, weekday: Weekday, n: UByte): NaiveDate =
             fromWeekdayOfMonthOpt(year, month, weekday, n) ?: throw IllegalArgumentException("out-of-range date")
+
+        /** Parses a string into a [NaiveDate] using the `%Y-%m-%d` format. */
+        fun fromStr(s: String): Result<NaiveDate> = parseNaiveDate(s)
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<NaiveDate> where D : Deserializer =
+            deserializer.deserializeStr(NaiveDateVisitor)
     }
+}
+
+private object NaiveDateVisitor : Visitor<NaiveDate> {
+    override fun expecting(): String = "a formatted date string"
+
+    override fun visitStr(v: String): SerdeResult<NaiveDate> =
+        NaiveDate.fromStr(v).fold(
+            onSuccess = { SerdeResult.Success(it) },
+            onFailure = { SerdeResult.Failure(SerdeError.custom(it.toString())) },
+        )
 }
 
 private fun cycleToYo(cycle: UInt): Pair<UInt, UInt> {

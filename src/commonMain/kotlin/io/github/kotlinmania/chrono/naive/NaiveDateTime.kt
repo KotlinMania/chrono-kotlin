@@ -8,10 +8,18 @@ import io.github.kotlinmania.chrono.Months
 import io.github.kotlinmania.chrono.TimeDelta
 import io.github.kotlinmania.chrono.Timelike
 import io.github.kotlinmania.chrono.Weekday
+import io.github.kotlinmania.chrono.format.parseNaiveDateTime
 import io.github.kotlinmania.chrono.offset.FixedOffset
 import io.github.kotlinmania.chrono.offset.MappedLocalTime
 import io.github.kotlinmania.chrono.offset.TimeZone
 import io.github.kotlinmania.chrono.offset.Utc
+import io.github.kotlinmania.serde.SerdeError
+import io.github.kotlinmania.serde.SerdeResult
+import io.github.kotlinmania.serdecore.de.Deserialize
+import io.github.kotlinmania.serdecore.de.Deserializer
+import io.github.kotlinmania.serdecore.de.Visitor
+import io.github.kotlinmania.serdecore.ser.Serialize
+import io.github.kotlinmania.serdecore.ser.Serializer
 
 /**
  * ISO 8601 combined date and time without timezone.
@@ -21,7 +29,8 @@ class NaiveDateTime(
     internal val time: NaiveTime,
 ) : Datelike<NaiveDateTime>,
     Timelike<NaiveDateTime>,
-    Comparable<NaiveDateTime> {
+    Comparable<NaiveDateTime>,
+    Serialize {
     /** Retrieves the date component. */
     fun date(): NaiveDate = date
 
@@ -223,10 +232,29 @@ class NaiveDateTime(
 
     override fun toString(): String = "${date}T$time"
 
-    companion object {
+    override fun <Ok> serialize(serializer: Serializer<Ok>): SerdeResult<Ok> =
+        serializer.collectStr(toString())
+
+    companion object : Deserialize<NaiveDateTime> {
         val MIN: NaiveDateTime = NaiveDateTime(NaiveDate.MIN, NaiveTime.MIN)
         val MAX: NaiveDateTime = NaiveDateTime(NaiveDate.MAX, NaiveTime.MAX)
 
         fun new(date: NaiveDate, time: NaiveTime): NaiveDateTime = NaiveDateTime(date, time)
+
+        /** Parses a string into a [NaiveDateTime] using the `%Y-%m-%dT%H:%M:%S%.f` format. */
+        fun fromStr(s: String): Result<NaiveDateTime> = parseNaiveDateTime(s)
+
+        override fun <D> deserialize(deserializer: D): SerdeResult<NaiveDateTime> where D : Deserializer =
+            deserializer.deserializeStr(NaiveDateTimeVisitor)
     }
+}
+
+private object NaiveDateTimeVisitor : Visitor<NaiveDateTime> {
+    override fun expecting(): String = "a formatted date and time string"
+
+    override fun visitStr(v: String): SerdeResult<NaiveDateTime> =
+        NaiveDateTime.fromStr(v).fold(
+            onSuccess = { SerdeResult.Success(it) },
+            onFailure = { SerdeResult.Failure(SerdeError.custom(it.toString())) },
+        )
 }
