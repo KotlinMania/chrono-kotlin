@@ -11,6 +11,8 @@ ktlintEngine = "1.8.0"
 kotlinxBenchmark = "0.5.0"
 serde = "0.1.10"
 serdeTest = "0.1.1"
+ianaTimeZone = "0.1.1"
+windowsSys = "0.1.1"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -30,6 +32,8 @@ collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-im
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinxBenchmark" }
 serde-kotlin = { module = "io.github.kotlinmania:serde-kotlin", version.ref = "serde" }
 serde-test-kotlin = { module = "io.github.kotlinmania:serde-test-kotlin", version.ref = "serdeTest" }
+iana-time-zone-kotlin = { module = "io.github.kotlinmania:iana-time-zone-kotlin", version.ref = "ianaTimeZone" }
+windows-sys-kotlin = { module = "io.github.kotlinmania:windows-sys-kotlin", version.ref = "windowsSys" }
 
 [bundles]
 chrono-commonMain = [
@@ -39,6 +43,7 @@ chrono-commonMain = [
   "kotlinx-datetime",
   "collections-immutable",
   "serde-kotlin",
+  "iana-time-zone-kotlin",
 ]
 chrono-commonTest = [
   "serde-test-kotlin",

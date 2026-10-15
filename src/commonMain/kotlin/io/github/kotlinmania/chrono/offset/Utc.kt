@@ -21,8 +21,7 @@ data object Utc : TimeZone, Offset {
      * Returns a `Date` which corresponds to the current date.
      */
     @Deprecated("Use Utc.now() instead, potentially with dateNaive().")
-    @Suppress("DEPRECATION")
-    fun today(): Date<Utc> = now().date()
+    fun today(): Date<Utc> = Date(now().dateNaive(), Utc)
 
     /**
      * Returns a `DateTime` which corresponds to the current date and time in
@@ -45,6 +44,25 @@ data object Utc : TimeZone, Offset {
     override fun offsetFromUtcDate(utc: NaiveDate): Utc = Utc
 
     override fun offsetFromUtcDatetime(utc: NaiveDateTime): Utc = Utc
+
+    override fun fromLocalDatetime(local: NaiveDateTime): MappedLocalTime<DateTime<Utc>> =
+        MappedLocalTime.Single(DateTime.fromNaiveUtcAndOffset(local, Utc))
+
+    override fun fromUtcDatetime(utc: NaiveDateTime): DateTime<Utc> =
+        DateTime.fromNaiveUtcAndOffset(utc, Utc)
+
+    override fun withYmdAndHms(
+        year: Int,
+        month: UInt,
+        day: UInt,
+        hour: UInt,
+        min: UInt,
+        sec: UInt,
+    ): MappedLocalTime<DateTime<Utc>> {
+        val d = NaiveDate.fromYmdOpt(year, month, day) ?: return MappedLocalTime.None
+        val dt = d.andHmsOpt(hour, min, sec) ?: return MappedLocalTime.None
+        return fromLocalDatetime(dt)
+    }
 
     override fun fix(): FixedOffset = FixedOffset.eastOpt(0)!!
 

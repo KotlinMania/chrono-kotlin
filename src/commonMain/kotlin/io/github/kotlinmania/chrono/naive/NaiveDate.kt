@@ -802,6 +802,12 @@ class NaiveDate internal constructor(
         /** The maximum possible [NaiveDate] (December 31, 262142 CE). */
         val MAX: NaiveDate = fromYof((MAX_YEAR shl 13) or (365 shl 4) or 14)
 
+        /** One day before the minimum possible [NaiveDate] (December 31, 262145 BCE). */
+        internal val BEFORE_MIN: NaiveDate = fromYof(((MIN_YEAR - 1) shl 13) or (366 shl 4) or 7)
+
+        /** One day after the maximum possible [NaiveDate] (January 1, 262143 CE). */
+        internal val AFTER_MAX: NaiveDate = fromYof(((MAX_YEAR + 1) shl 13) or (1 shl 4) or 15)
+
         /** Makes a new [NaiveDate] from year, ordinal and flags. */
         internal fun fromOrdinalAndFlags(
             year: Int,

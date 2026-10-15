@@ -124,6 +124,36 @@ class NaiveDateTime(
         return NaiveDateTime(newDate, newTime)
     }
 
+    /**
+     * Adds given [FixedOffset] to the current datetime.
+     * The resulting value may be outside the valid range of [NaiveDateTime].
+     */
+    internal fun overflowingAddOffset(rhs: FixedOffset): NaiveDateTime {
+        val (newTime, days) = time.overflowingAddOffset(rhs)
+        val newDate =
+            when (days) {
+                -1 -> date.predOpt() ?: NaiveDate.BEFORE_MIN
+                1 -> date.succOpt() ?: NaiveDate.AFTER_MAX
+                else -> date
+            }
+        return NaiveDateTime(newDate, newTime)
+    }
+
+    /**
+     * Subtracts given [FixedOffset] from the current datetime.
+     * The resulting value may be outside the valid range of [NaiveDateTime].
+     */
+    internal fun overflowingSubOffset(rhs: FixedOffset): NaiveDateTime {
+        val (newTime, days) = time.overflowingSubOffset(rhs)
+        val newDate =
+            when (days) {
+                -1 -> date.predOpt() ?: NaiveDate.BEFORE_MIN
+                1 -> date.succOpt() ?: NaiveDate.AFTER_MAX
+                else -> date
+            }
+        return NaiveDateTime(newDate, newTime)
+    }
+
     /** Adds [TimeDelta] to the current date and time. */
     fun checkedAddSigned(rhs: TimeDelta): NaiveDateTime? {
         val (newTime, remainder) = time.overflowingAddSigned(rhs)
@@ -162,6 +192,26 @@ class NaiveDateTime(
     fun checkedSubMonths(rhs: Months): NaiveDateTime? =
         date.checkedSubMonths(rhs)?.let { NaiveDateTime(it, time) }
 
+    /** Adds a duration in [Days] to the date part of the [NaiveDateTime]. */
+    fun checkedAddDays(days: Days): NaiveDateTime? =
+        date.checkedAddDays(days)?.let { NaiveDateTime(it, time) }
+
+    /** Subtracts a duration in [Days] from the date part of the [NaiveDateTime]. */
+    fun checkedSubDays(days: Days): NaiveDateTime? =
+        date.checkedSubDays(days)?.let { NaiveDateTime(it, time) }
+
+    operator fun plus(days: Days): NaiveDateTime =
+        checkedAddDays(days) ?: throw ArithmeticException("NaiveDateTime + Days out of range")
+
+    operator fun minus(days: Days): NaiveDateTime =
+        checkedSubDays(days) ?: throw ArithmeticException("NaiveDateTime - Days out of range")
+
+    operator fun plus(months: Months): NaiveDateTime =
+        checkedAddMonths(months) ?: throw ArithmeticException("NaiveDateTime + Months out of range")
+
+    operator fun minus(months: Months): NaiveDateTime =
+        checkedSubMonths(months) ?: throw ArithmeticException("NaiveDateTime - Months out of range")
+
     /** Subtracts another [NaiveDateTime] from this, returning [TimeDelta]. */
     fun signedDurationSince(rhs: NaiveDateTime): TimeDelta {
         val dateDelta = date.signedDurationSince(rhs.date)
@@ -173,14 +223,16 @@ class NaiveDateTime(
     fun andUtc(): DateTime<Utc> = DateTime.fromNaiveUtcAndOffset(this, Utc)
 
     /** Maps this local datetime to a [DateTime] in Utc timezone. */
-    @Suppress("UNCHECKED_CAST")
     fun andLocalTimezone(tz: Utc): MappedLocalTime<DateTime<Utc>> =
-        tz.fromLocalDatetime(this) as MappedLocalTime<DateTime<Utc>>
+        tz.fromLocalDatetime(this)
 
     /** Maps this local datetime to a [DateTime] in FixedOffset timezone. */
-    @Suppress("UNCHECKED_CAST")
-    fun andLocalTimezone(tz: io.github.kotlinmania.chrono.offset.FixedOffset): MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.FixedOffset>> =
-        tz.fromLocalDatetime(this) as MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.FixedOffset>>
+    fun andLocalTimezone(tz: FixedOffset): MappedLocalTime<DateTime<FixedOffset>> =
+        tz.fromLocalDatetime(this)
+
+    /** Maps this local datetime to a [DateTime] in Local timezone. */
+    fun andLocalTimezone(tz: io.github.kotlinmania.chrono.offset.local.Local): MappedLocalTime<DateTime<io.github.kotlinmania.chrono.offset.local.Local>> =
+        tz.fromLocalDatetime(this)
 
     /** Maps this local datetime to a [DateTime] in the specified timezone. */
     fun andLocalTimezone(tz: TimeZone): MappedLocalTime<DateTime<TimeZone>> =
