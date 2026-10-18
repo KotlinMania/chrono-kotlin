@@ -370,8 +370,6 @@ class DateTime<out Tz : TimeZone> internal constructor(
     }
 }
 
-typealias Local = io.github.kotlinmania.chrono.offset.local.Local
-
 private object DateTimeVisitor : Visitor<DateTime<FixedOffset>> {
     override fun expecting(): String = "an RFC 3339 formatted date and time string"
 
