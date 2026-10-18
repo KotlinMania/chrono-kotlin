@@ -1,7 +1,6 @@
 // port-lint: source src/weekday.rs
 package io.github.kotlinmania.chrono
 
-
 import io.github.kotlinmania.serde.SerdeError
 import io.github.kotlinmania.serde.SerdeResult
 import io.github.kotlinmania.serdecore.de.Deserialize
