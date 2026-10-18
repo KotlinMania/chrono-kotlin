@@ -46,5 +46,3 @@ interface TimeZone {
         return fromLocalDatetime(dt)
     }
 }
-
-typealias Local = io.github.kotlinmania.chrono.offset.local.Local
